@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amazon商品ページの構造ガイド｜どこに何が効くか</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Shippori+Mincho:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0F1111; --slate:#565959; --line:#D5D9D9; --bg:#EAEDED;
+    --link:#007185; --price:#B12704;
+    --btn-cart:#FFD814; --btn-buy:#FFA41C; --btn-border:#FCD200;
+    --star:#DE7921;
+    --anno:#C2185B;            /* 解説オーバーレイ色 */
+    --anno-soft:#FCE4EC;
+    --navy:#16243F; --gold:#BF9000;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Noto Sans JP",sans-serif;color:var(--ink);background:#fff;line-height:1.6;font-size:14px;-webkit-font-smoothing:antialiased}
+  a{color:var(--link);text-decoration:none} a:hover{color:var(--price);text-decoration:underline}
+  img{display:block}
+
+  /* ===== ガイドのバー ===== */
+  .guidebar{position:sticky;top:0;z-index:200;background:var(--navy);color:#fff;border-bottom:3px solid var(--gold)}
+  .guidebar .in{max-width:1180px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .guidebar h1{font-family:"Shippori Mincho",serif;font-weight:700;font-size:17px;letter-spacing:.02em}
+  .guidebar h1 small{display:block;font-family:"Noto Sans JP";font-weight:400;font-size:11px;color:#AEB8CC;letter-spacing:.04em;margin-top:2px}
+  .toggle{display:flex;align-items:center;gap:10px}
+  .toggle .lbl{font-size:12.5px;color:#D7DCE6}
+  .switch{position:relative;width:54px;height:28px;flex:none}
+  .switch input{opacity:0;width:100%;height:100%;margin:0;cursor:pointer;position:absolute;z-index:2}
+  .switch .track{position:absolute;inset:0;background:#3a4a6b;border-radius:999px;transition:.2s}
+  .switch .knob{position:absolute;top:3px;left:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:.2s}
+  .switch input:checked + .track{background:var(--anno)}
+  .switch input:checked + .track + .knob{transform:translateX(26px)}
+  .switch input:focus-visible + .track{outline:3px solid var(--gold);outline-offset:2px}
+
+  /* ===== 疑似マーケットプレイスのヘッダー(ロゴ無し・汎用) ===== */
+  .mp-head{background:#131A22;color:#fff;font-size:12px}
+  .mp-head .row{max-width:1180px;margin:0 auto;padding:8px 20px;display:flex;align-items:center;gap:14px}
+  .mp-logo{font-weight:900;letter-spacing:.02em;font-size:18px}
+  .mp-logo i{color:var(--btn-buy);font-style:normal}
+  .mp-search{flex:1;display:flex;height:34px;border-radius:5px;overflow:hidden;max-width:640px}
+  .mp-search .cat{background:#E6E6E6;color:#333;display:flex;align-items:center;padding:0 10px;font-size:11px}
+  .mp-search input{flex:1;border:0;padding:0 10px;font-size:13px}
+  .mp-search .go{width:42px;background:var(--btn-buy);display:flex;align-items:center;justify-content:center;color:#111;font-weight:700}
+  .mp-head .item{display:flex;flex-direction:column;line-height:1.25}
+  .mp-head .item b{font-size:13px}
+  .mp-sub{background:#232F3E;color:#fff;font-size:12px}
+  .mp-sub .row{max-width:1180px;margin:0 auto;padding:6px 20px;display:flex;gap:18px;overflow:auto}
+
+  /* ===== 商品ページ本体 ===== */
+  .page{max-width:1180px;margin:0 auto;padding:18px 20px 60px}
+  .crumb{color:var(--slate);font-size:12px;margin-bottom:14px}
+  .detail{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr) 300px;gap:28px;align-items:start}
+
+  /* 画像 */
+  .gallery{display:flex;gap:12px}
+  .thumbs{display:flex;flex-direction:column;gap:8px}
+  .thumb{width:42px;height:42px;border:1px solid var(--line);border-radius:5px;background:#F3F4F4;display:flex;align-items:center;justify-content:center;color:#9aa;font-size:10px}
+  .thumb.active{border-color:var(--btn-buy);box-shadow:0 0 0 1px var(--btn-buy)}
+  .main-img{flex:1;aspect-ratio:1/1;border:1px solid var(--line);border-radius:8px;background:repeating-linear-gradient(45deg,#F7F8F8,#F7F8F8 14px,#F1F2F2 14px,#F1F2F2 28px);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#8a9396;text-align:center;gap:6px}
+  .main-img .big{font-size:13px;font-weight:700;color:#67727a}
+  .main-img .sub{font-size:11px}
+
+  /* 中央 */
+  .pinfo h2.title{font-weight:500;font-size:22px;line-height:1.35;margin-bottom:6px}
+  .store-link{font-size:13px;margin-bottom:6px}
+  .rate{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:6px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  .stars{color:var(--star);letter-spacing:1px;font-size:14px}
+  .rate .cnt{color:var(--link)}
+  .price-block{margin:12px 0;padding-bottom:12px;border-bottom:1px solid var(--line)}
+  .price-now{color:var(--price);font-size:13px}
+  .price-now .big{font-size:28px;font-weight:700}
+  .price-sub{color:var(--slate);font-size:12px;margin-top:4px}
+  .bullets{margin:14px 0}
+  .bullets h3{font-size:15px;font-weight:700;margin-bottom:8px}
+  .bullets ul{list-style:none}
+  .bullets li{position:relative;padding-left:18px;margin-bottom:7px;font-size:13px;color:#111}
+  .bullets li::before{content:"";position:absolute;left:4px;top:9px;width:5px;height:5px;background:#555;border-radius:50%}
+
+  /* Buy box */
+  .buybox{border:1px solid var(--line);border-radius:10px;padding:16px;font-size:13px}
+  .buybox .p{color:var(--price);font-size:22px;font-weight:700;margin-bottom:6px}
+  .buybox .deliv{color:#111;margin-bottom:4px}
+  .buybox .deliv b{color:var(--link)}
+  .buybox .stock{color:#007600;font-size:17px;font-weight:500;margin:10px 0}
+  .qty{border:1px solid var(--line);border-radius:8px;padding:6px 10px;display:inline-flex;gap:8px;font-size:12px;margin-bottom:12px;background:#F0F2F2}
+  .bbtn{display:block;width:100%;border:1px solid var(--btn-border);border-radius:999px;padding:9px;text-align:center;font-size:13px;font-weight:500;margin-bottom:9px;cursor:pointer}
+  .bbtn.cart{background:var(--btn-cart)}
+  .bbtn.buy{background:var(--btn-buy)}
+  .buybox .meta{font-size:12px;color:var(--slate);margin-top:6px}
+  .buybox .meta span{color:var(--link)}
+
+  /* 下部の大枠 */
+  .lower{max-width:1180px;margin:0 auto;padding:0 20px 80px}
+  .block{margin-top:26px;border-top:1px solid var(--line);padding-top:26px}
+  .block > h2{font-size:21px;font-weight:700;margin-bottom:16px}
+
+  /* From the brand / ブランド帯 */
+  .brandhero{background:#0E2A2E;color:#fff;border-radius:10px;overflow:hidden}
+  .brandhero .band{height:150px;background:linear-gradient(120deg,#0E2A2E,#16494f);display:flex;align-items:center;justify-content:center;color:#cfe6e3;font-family:"Shippori Mincho",serif;font-size:18px;letter-spacing:.1em}
+  .brandhero .cap{padding:16px 20px;font-size:13px;color:#cfe6e3}
+
+  /* A+ modules */
+  .aplus .mod{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:16px}
+  .aplus .mod .ph-img{min-height:200px;background:repeating-linear-gradient(45deg,#F7F8F8,#F7F8F8 14px,#F1F2F2 14px,#F1F2F2 28px);display:flex;align-items:center;justify-content:center;color:#8a9396;font-size:12px;text-align:center;padding:16px}
+  .aplus .mod .txt{padding:26px 28px}
+  .aplus .mod .txt h4{font-family:"Shippori Mincho",serif;font-size:19px;margin-bottom:10px;color:#1a1a1a}
+  .aplus .mod .txt p{font-size:13.5px;color:#333}
+  .aplus .mod.rev{direction:rtl}
+  .aplus .mod.rev > *{direction:ltr}
+  .aplus .cmp{width:100%;border-collapse:collapse;font-size:13px}
+  .aplus .cmp th,.aplus .cmp td{border:1px solid var(--line);padding:10px 12px;text-align:center}
+  .aplus .cmp th{background:#F7F8F8;font-weight:700}
+  .aplus .cmp .feat{text-align:left;background:#FAFAFA;font-weight:500}
+
+  /* ブランドストーリー */
+  .story{border:1px solid var(--line);border-radius:10px;padding:0;overflow:hidden}
+  .story .top{background:#1c2a1c;color:#e7eee2;padding:34px 28px;text-align:center}
+  .story .top .k{font-family:"Shippori Mincho",serif;font-size:22px;line-height:1.7}
+  .story .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+  .story .cell{padding:22px;border-right:1px solid var(--line);text-align:center}
+  .story .cell:last-child{border-right:0}
+  .story .cell .ic{width:60px;height:60px;margin:0 auto 12px;border-radius:50%;background:#EEF3EC;display:flex;align-items:center;justify-content:center;color:#5a6b53;font-size:11px}
+  .story .cell p{font-size:12.5px;color:#444}
+
+  /* 商品情報テーブル */
+  .spec{width:100%;border-collapse:collapse;font-size:13px;max-width:680px}
+  .spec th{background:#F7F8F8;text-align:left;padding:9px 12px;border:1px solid var(--line);width:180px;font-weight:700}
+  .spec td{padding:9px 12px;border:1px solid var(--line)}
+
+  /* レビュー */
+  .rev-sum{display:flex;gap:30px;align-items:center;flex-wrap:wrap}
+  .rev-big{font-size:34px;font-weight:700}
+  .rev-bars{flex:1;min-width:220px;max-width:380px}
+  .rev-bar{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:5px}
+  .rev-bar .b{flex:1;height:18px;background:#F0F2F2;border-radius:3px;overflow:hidden}
+  .rev-bar .b i{display:block;height:100%;background:var(--btn-buy)}
+  .rev-photos{display:flex;gap:8px;margin-top:16px}
+  .rev-photos .rp{width:62px;height:62px;border:1px solid var(--line);border-radius:6px;background:#F3F4F4;display:flex;align-items:center;justify-content:center;color:#9aa;font-size:9px;text-align:center}
+
+  /* ===== 解説オーバーレイ ===== */
+  .region{position:relative}
+  .region .anno{
+    position:absolute;z-index:30;top:8px;left:8px;
+    background:var(--anno);color:#fff;font-size:11.5px;font-weight:700;
+    padding:5px 10px 5px 8px;border-radius:6px;display:none;align-items:center;gap:7px;
+    box-shadow:0 6px 18px rgba(194,24,91,.35);max-width:240px;line-height:1.4;
+  }
+  .region .anno .no{background:#fff;color:var(--anno);width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex:none}
+  .region .anno small{display:block;font-weight:400;font-size:10.5px;color:#ffe1ec;margin-top:1px}
+  /* placement variants */
+  .anno.tl{top:8px;left:8px} .anno.tr{top:8px;right:8px;left:auto} .anno.bl{top:auto;bottom:8px;left:8px}
+  body.annotated .region{outline:2px dashed var(--anno);outline-offset:3px;border-radius:6px}
+  body.annotated .region > .anno{display:flex}
+  body.annotated .buybox-region{outline-color:#9aa3ad;outline-style:dotted}
+  body.annotated .buybox-region > .anno{background:#5b6770;box-shadow:none}
+  body.annotated .buybox-region > .anno .no{color:#5b6770}
+
+  /* ===== 凡例 ===== */
+  .legend{max-width:1180px;margin:30px auto 0;padding:0 20px}
+  .legend-card{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .legend-card .lh{background:var(--navy);color:#fff;padding:14px 20px;font-family:"Shippori Mincho",serif;font-weight:700;font-size:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+  .legend-card .lh span{font-family:"Noto Sans JP";font-weight:400;font-size:12px;color:#AEB8CC}
+  .legend-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0}
+  .leg{display:flex;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line);border-right:1px solid var(--line)}
+  .leg .no{flex:none;width:24px;height:24px;border-radius:50%;background:var(--anno);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+  .leg.fixed .no{background:#5b6770}
+  .leg h5{font-size:14px;margin-bottom:3px}
+  .leg p{font-size:12.5px;color:var(--slate)}
+  .leg .do{display:inline-block;margin-top:6px;font-size:11.5px;font-weight:700;color:var(--gold);background:#FBF6E7;border-radius:5px;padding:2px 8px}
+
+  .cta-band{max-width:1180px;margin:34px auto 0;padding:0 20px}
+  .cta-inner{background:var(--navy);color:#fff;border-radius:14px;padding:38px clamp(24px,4vw,56px);position:relative;overflow:hidden;border:1px solid #24365c}
+  .cta-inner::before{content:"";position:absolute;inset:0;background:radial-gradient(620px 300px at 88% 0,rgba(191,144,0,.26),transparent 60%)}
+  .cta-inner>*{position:relative}
+  .cta-band .eb{font-size:11px;letter-spacing:.2em;color:var(--gold);font-weight:700;margin-bottom:10px}
+  .cta-band h3{font-family:"Shippori Mincho",serif;font-weight:700;font-size:clamp(20px,2.6vw,28px);line-height:1.55;margin-bottom:18px}
+  .cta-band .price{display:flex;align-items:baseline;gap:6px;margin-bottom:22px;flex-wrap:wrap}
+  .cta-band .price .num{font-family:"Shippori Mincho",serif;font-weight:800;font-size:42px;color:#fff;line-height:1}
+  .cta-band .price .yen{font-size:15px;color:#D9BD6B}
+  .cta-band .price .note{font-size:12.5px;color:#9AA4B6;margin-left:8px}
+  .cta-band .contact{display:flex;gap:26px;flex-wrap:wrap;font-size:13.5px;color:#E7EBF2;margin-bottom:24px}
+  .cta-band .contact .lab{font-size:10.5px;color:#9AA4B6;letter-spacing:.08em;margin-bottom:3px}
+  .cta-band .contact a{color:#D9BD6B}
+  .cta-band .cbtn{display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:var(--navy);font-weight:700;font-size:15px;padding:13px 28px;border-radius:999px;transition:.2s}
+  .cta-band .cbtn:hover{text-decoration:none;transform:translateY(-1px);box-shadow:0 10px 26px rgba(191,144,0,.3)}
+  .cta-band .cbtn:focus-visible{outline:3px solid #D9BD6B;outline-offset:3px}
+  .footnote{max-width:1180px;margin:18px auto 50px;padding:0 20px;font-size:11.5px;color:#8a9396}
+
+  @media (max-width:980px){
+    .detail{grid-template-columns:1fr}
+    .legend-grid{grid-template-columns:1fr}
+    .aplus .mod,.story .grid{grid-template-columns:1fr}
+    .story .cell{border-right:0;border-bottom:1px solid var(--line)}
+  }
+</style>
+</head>
+<body class="annotated">
+
+<!-- ガイドのバー -->
+<div class="guidebar">
+  <div class="in">
+    <h1>Amazon商品ページの構造ガイド<small>※ Amazonの商品ページを模した教材サンプル（架空商品）／ロゴ・実写真は使用していません</small></h1>
+    <div class="toggle">
+      <span class="lbl">どこに何が効くか</span>
+      <label class="switch" title="解説ラベルの表示切替">
+        <input type="checkbox" id="annoToggle" aria-label="解説ラベルの表示切替" checked>
+        <span class="track"></span><span class="knob"></span>
+      </label>
+      <span class="lbl" id="annoState">解説：ON</span>
+    </div>
+  </div>
+</div>
+
+<!-- 疑似ヘッダー -->
+<div class="mp-head">
+  <div class="row">
+    <div class="mp-logo">marketplace<i>.</i></div>
+    <div class="mp-search"><div class="cat">すべて ▾</div><input value="のどぐろ 干物 ギフト" readonly><div class="go">🔍</div></div>
+    <div class="item"><span>こんにちは</span><b>アカウント ▾</b></div>
+    <div class="item">🛒 <b>カート</b></div>
+  </div>
+</div>
+<div class="mp-sub"><div class="row"><span>すべて</span><span>食品・飲料</span><span>魚介類</span><span>ギフト</span><span>ランキング</span><span>本日のセール</span></div></div>
+
+<!-- 商品ページ -->
+<div class="page">
+  <div class="crumb">食品・飲料 ＞ 魚介類・水産加工品 ＞ 干物 ＞ のどぐろ</div>
+
+  <div class="detail">
+
+    <!-- 左：画像 -->
+    <div class="region">
+      <div class="anno tl"><span class="no">1</span><span>商品画像（メイン＋サブ）<small>最初の3秒。スマホは画像でほぼ決まる</small></span></div>
+      <div class="gallery">
+        <div class="thumbs">
+          <div class="thumb active">①</div><div class="thumb">②</div><div class="thumb">③</div>
+          <div class="thumb">④</div><div class="thumb">⑤</div><div class="thumb">動画</div>
+        </div>
+        <div class="main-img">
+          <span class="big">商品画像が入る場所</span>
+          <span class="sub">メイン1枚＋サブ5〜6枚＋動画</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 中央：商品情報 -->
+    <div class="pinfo">
+      <div class="region">
+        <div class="anno tr"><span class="no">2</span><span>商品タイトル<small>検索ヒット＋一覧でクリックされる言葉</small></span></div>
+        <h2 class="title">氷温熟成 のどぐろ 一夜干し 6枚 化粧箱入り｜山陰浜田港 水揚げ ギフト 贈答用 のし対応</h2>
+      </div>
+
+      <div class="region">
+        <div class="anno tr"><span class="no">5</span><span>ブランドストアへの導線<small>ブランド全体への入口リンク</small></span></div>
+        <div class="store-link"><a href="#story">美浦水産（みうらすいさん）のストアを表示</a></div>
+      </div>
+
+      <div class="region">
+        <div class="anno tr"><span class="no">3</span><span>レビュー（星・件数・写真）<small>信頼。レビュー画像の質まで含む</small></span></div>
+        <div class="rate">
+          <span class="stars">★★★★☆</span>
+          <span>4.4</span>
+          <span class="cnt">128件の評価</span>
+        </div>
+      </div>
+
+      <div class="price-block">
+        <div class="price-now"><span>￥</span><span class="big">4,980</span><span>（税込）</span></div>
+        <div class="price-sub">1枚あたり ￥830 ／ ポイント 49pt（1%）／ 明日中にお届け</div>
+      </div>
+
+      <div class="region">
+        <div class="anno tr"><span class="no">4</span><span>箇条書き（商品の要点）<small>価格を見る前に“買う理由”を渡す場所</small></span></div>
+        <div class="bullets">
+          <h3>この商品について</h3>
+          <ul>
+            <li>山陰・浜田港で水揚げされた高鮮度ののどぐろを、氷温熟成でうま味を引き出した一夜干し。</li>
+            <li>脂のりの良い個体のみを選別。焼くだけで料亭の一品に。</li>
+            <li>化粧箱入り・のし対応。お中元／お歳暮／内祝いなどの贈答に。</li>
+            <li>個包装で必要な分だけ解凍可能。冷凍で約30日保存。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右：購入ボックス -->
+    <div class="region buybox-region">
+      <div class="anno tr"><span class="no">－</span><span>購入ボックス<small>価格・在庫・配送。基本ここは触らない領域</small></span></div>
+      <div class="buybox">
+        <div class="p">￥4,980 <span style="font-size:12px;color:#565959">税込</span></div>
+        <div class="deliv"><b>明日中</b> にお届け（注文確定後）</div>
+        <div class="deliv">配送料 <b>無料</b></div>
+        <div class="stock">在庫あり</div>
+        <div class="qty">数量：1 ▾</div>
+        <div class="bbtn cart">カートに入れる</div>
+        <div class="bbtn buy">今すぐ買う</div>
+        <div class="meta">出荷元 <span>marketplace</span><br>販売元 <span>美浦水産</span></div>
+        <div class="meta">🎁 ギフトの設定（のし・メッセージ）が可能</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 下部 -->
+<div class="lower">
+
+  <!-- ブランド帯 -->
+  <div class="block">
+    <div class="region">
+      <div class="anno tl"><span class="no">5</span><span>ブランド紹介帯（From the brand）<small>ストアへの上部入口。ブランドの世界観を最初に提示</small></span></div>
+      <div class="brandhero">
+        <div class="band">美浦水産  — 山陰の海から、食卓へ</div>
+        <div class="cap">ブランドのロゴ・キービジュアル・キャッチが入る帯（A+のブランドヘッダー枠）</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- A+コンテンツ -->
+  <div class="block">
+    <h2>商品の説明</h2>
+    <div class="region aplus">
+      <div class="anno tl"><span class="no">6</span><span>A+コンテンツ（リッチな商品説明）<small>画像＋文章＋比較表。良さが伝わる本体。空欄/素人写真だと最大の機会損失</small></span></div>
+
+      <div class="mod">
+        <div class="ph-img">商品の使用シーン画像<br>（焼き上がり・食卓）</div>
+        <div class="txt"><h4>焼くだけで、料亭の一皿。</h4><p>氷温熟成でうま味を最大化。脂がのった身は、ふっくらと香ばしく焼き上がります。下処理済みで、家庭のグリルでそのまま。忙しい日の食卓にも、特別な日のもてなしにも。</p></div>
+      </div>
+
+      <div class="mod rev">
+        <div class="ph-img">産地・製法の画像<br>（漁港・職人）</div>
+        <div class="txt"><h4>浜田港の目利きが選ぶ、一夜干し。</h4><p>水揚げされた中から脂のりの良い個体だけを選別し、塩加減と乾燥を職人が管理。鮮度のまま急速冷凍するから、解凍してもうま味が逃げません。</p></div>
+      </div>
+
+      <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden">
+        <div style="padding:14px 16px;background:#F7F8F8;font-weight:700">他の人気商品との比較</div>
+        <table class="cmp">
+          <tr><th class="feat">　</th><th>のどぐろ一夜干し<br>（本商品）</th><th>干物詰合せ<br>8種</th><th>連子鯛<br>一夜干し</th></tr>
+          <tr><td class="feat">産地</td><td>山陰・浜田港</td><td>各地</td><td>瀬戸内</td></tr>
+          <tr><td class="feat">用途</td><td>贈答・自宅</td><td>自宅</td><td>自宅</td></tr>
+          <tr><td class="feat">のし対応</td><td>○</td><td>－</td><td>－</td></tr>
+          <tr><td class="feat">1枚あたり</td><td>￥830</td><td>￥410</td><td>￥390</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ブランドストーリー -->
+  <div class="block" id="story">
+    <h2>ブランドについて</h2>
+    <div class="region">
+      <div class="anno tl"><span class="no">7</span><span>ブランドストーリー<small>作り手の物語。ギフト・食品で効く差別化。価格競争から抜ける武器</small></span></div>
+      <div class="story">
+        <div class="top"><div class="k">「いちばん良い時季の、いちばん良い魚を。」<br>創業以来、私たちが守ってきたただ一つの基準です。</div></div>
+        <div class="grid">
+          <div class="cell"><div class="ic">沿革</div><p>1952年、浜田港にて創業。三代にわたり目利きを継承。</p></div>
+          <div class="cell"><div class="ic">製法</div><p>氷温熟成と職人の塩加減。機械任せにしない一夜干し。</p></div>
+          <div class="cell"><div class="ic">想い</div><p>遠くの食卓へ、水揚げそのままのうま味を届けたい。</p></div>
+          <div class="cell"><div class="ic">約束</div><p>選別から梱包まで自社一貫。贈っても恥ずかしくない品質。</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 商品情報 -->
+  <div class="block">
+    <h2>商品の情報</h2>
+    <table class="spec">
+      <tr><th>原材料</th><td>のどぐろ（山陰産）、食塩</td></tr>
+      <tr><th>内容量</th><td>6枚（個包装）／化粧箱入り</td></tr>
+      <tr><th>保存方法</th><td>−18℃以下で冷凍保存</td></tr>
+      <tr><th>賞味期限</th><td>製造日より約30日</td></tr>
+      <tr><th>販売者</th><td>美浦水産株式会社（架空）</td></tr>
+    </table>
+  </div>
+
+  <!-- レビュー -->
+  <div class="block">
+    <h2>カスタマーレビュー</h2>
+    <div class="region">
+      <div class="anno bl"><span class="no">3</span><span>レビュー詳細・レビュー写真<small>★分布とお客様写真。写真の見栄えも演出できる</small></span></div>
+      <div class="rev-sum">
+        <div>
+          <div class="rev-big">4.4 <span style="font-size:15px;color:#565959">/ 5</span></div>
+          <div class="stars" style="font-size:18px">★★★★☆</div>
+          <div style="font-size:12px;color:#565959">128件の評価</div>
+        </div>
+        <div class="rev-bars">
+          <div class="rev-bar"><span>星5</span><span class="b"><i style="width:64%"></i></span><span>64%</span></div>
+          <div class="rev-bar"><span>星4</span><span class="b"><i style="width:22%"></i></span><span>22%</span></div>
+          <div class="rev-bar"><span>星3</span><span class="b"><i style="width:9%"></i></span><span>9%</span></div>
+          <div class="rev-bar"><span>星2</span><span class="b"><i style="width:3%"></i></span><span>3%</span></div>
+          <div class="rev-bar"><span>星1</span><span class="b"><i style="width:2%"></i></span><span>2%</span></div>
+          <div class="rev-photos">
+            <div class="rp">お客様<br>写真</div><div class="rp">お客様<br>写真</div><div class="rp">お客様<br>写真</div><div class="rp">+25</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 凡例 -->
+<div class="legend">
+  <div class="legend-card">
+    <div class="lh">対応可能箇所一覧 <span>ページ上の番号と対応しています</span></div>
+    <div class="legend-grid">
+      <div class="leg"><div class="no">1</div><div><h5>商品画像（メイン＋サブ＋動画）</h5><p>一覧でも詳細でも、最初に見られる。スマホ流入では実質ここで勝負が決まる。</p><span class="do">→ 商品画像・撮影ディレクション</span></div></div>
+      <div class="leg"><div class="no">2</div><div><h5>商品タイトル</h5><p>検索にヒットする言葉＋クリックしたくなる言葉の両立。キーワード設計が効く。</p><span class="do">→ コピー・SEO</span></div></div>
+      <div class="leg"><div class="no">3</div><div><h5>レビュー（星・件数・写真）</h5><p>信頼の核。星分布やお客様写真の見え方まで含めて整える。</p><span class="do">→ レビュー施策・写真演出</span></div></div>
+      <div class="leg"><div class="no">4</div><div><h5>箇条書き（商品の要点）</h5><p>価格を見る前に「買う理由」を渡す位置。要点の順番と言い回しで離脱が変わる。</p><span class="do">→ コピー設計</span></div></div>
+      <div class="leg"><div class="no">5</div><div><h5>ブランドストアへの導線／ブランド帯</h5><p>単品で終わらせず、ブランド全体へ送る入口。世界観の第一印象。</p><span class="do">→ ブランドストア構築</span></div></div>
+      <div class="leg"><div class="no">6</div><div><h5>A+コンテンツ（リッチな商品説明）</h5><p>画像＋文章＋比較表のリッチ枠。良さが伝わる本体。未整備なら最大の機会損失。</p><span class="do">→ A+制作（画像＋構成）</span></div></div>
+      <div class="leg"><div class="no">7</div><div><h5>ブランドストーリー</h5><p>作り手の物語。ギフト・食品で特に効く。価格競争から抜ける差別化。</p><span class="do">→ ストーリー設計・制作</span></div></div>
+      <div class="leg fixed"><div class="no">－</div><div><h5>購入ボックス（価格・在庫・配送）</h5><p>システム領域。基本は触らない。ここ以外の“伝える”部分が制作で動かせる範囲。</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 価格・連絡先（HOHOHO・モック外） -->
+<div class="cta-band">
+  <div class="cta-inner">
+    <div class="eb">HOHOHO — 食品ECのクリエイティブ支援</div>
+    <h3>御社の魅力がより多くのユーザーに伝わるようサポートさせていただきます。<br>まずは無料で、御社のページ診断から。</h3>
+    <div class="price"><span class="yen">月額</span><span class="num">5</span><span class="yen">万円</span><span class="note">〜（対応範囲に応じてお見積り／初期費用0円・月単位）</span></div>
+    <div class="contact">
+      <div><div class="lab">メール</div><a href="mailto:kengo.nakajima@hohoho.jp">kengo.nakajima@hohoho.jp</a></div>
+      <div><div class="lab">電話</div><a href="tel:08070291008">080-7029-1008</a></div>
+    </div>
+    <a class="cbtn" href="mailto:kengo.nakajima@hohoho.jp?subject=Amazonページ無料診断の依頼">無料でページを診断する →</a>
+  </div>
+</div>
+
+<div class="footnote">
+  ※ 本ページはAmazon商品ページの構造を説明するための教材サンプルです。商品・ブランド・数値はすべて架空で、Amazonのロゴ・商標・実際の商品画像は使用していません。実商談では実在商品のキャプチャに同じ番号を重ねてご説明いただけます。
+</div>
+
+<script>
+  const t = document.getElementById('annoToggle');
+  const s = document.getElementById('annoState');
+  t.addEventListener('change', ()=>{
+    document.body.classList.toggle('annotated', t.checked);
+    s.textContent = '解説：' + (t.checked ? 'ON' : 'OFF');
+  });
+</script>
+</body>
+</html>
